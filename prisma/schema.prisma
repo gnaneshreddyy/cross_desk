@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoomRole {
+  owner
+  editor
+  viewer
+}
+
+model User {
+  id           String            @id @default(cuid())
+  name         String
+  email        String            @unique
+  passwordHash String            @map("password_hash")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  ownedRooms   Room[]            @relation("RoomOwner")
+  memberships  RoomMember[]
+  versions     DocumentVersion[] @relation("VersionCreator")
+
+  @@map("users")
+}
+
+model Room {
+  id         String       @id @default(cuid())
+  name       String
+  ownerId    String       @map("owner_id")
+  inviteCode String       @unique @map("invite_code")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+  owner      User         @relation("RoomOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members    RoomMember[]
+  documents  Document[]
+
+  @@map("rooms")
+}
+
+model RoomMember {
+  id       String   @id @default(cuid())
+  roomId   String   @map("room_id")
+  userId   String   @map("user_id")
+  role     RoomRole @default(editor)
+  joinedAt DateTime @default(now()) @map("joined_at")
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@map("room_members")
+}
+
+model Document {
+  id        String            @id @default(cuid())
+  roomId    String            @map("room_id")
+  title     String
+  language  String
+  content   String            @default("")
+  yjsState  Bytes?            @map("yjs_state")
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+  room      Room              @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  versions  DocumentVersion[]
+
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id            String   @id @default(cuid())
+  documentId    String   @map("document_id")
+  versionNumber Int      @map("version_number")
+  content       String
+  yjsState      Bytes?   @map("yjs_state")
+  createdBy     String   @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  creator       User     @relation("VersionCreator", fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, versionNumber])
+  @@map("document_versions")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?  @map("actor_id")
+  roomId     String?  @map("room_id")
+  documentId String?  @map("document_id")
+  action     String
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}

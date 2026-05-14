@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+
+# Prisma and local database artifacts
+prisma/dev.db
+prisma/dev.db-journal
+*.sqlite
+*.sqlite3
+
+# Docker/local volumes
+.docker/
+docker-data/
+postgres_data/
+redis_data/
+
+# Test and cache output
+.vitest/
+.eslintcache
+.tsbuildinfo
+.cache/
+tmp/
+temp/
+
+# Package manager caches
+.npm/
+.pnpm-store/
+
+# Editor and OS files
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.example.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local tooling
+.vercel/
+.netlify/
+.turbo/
