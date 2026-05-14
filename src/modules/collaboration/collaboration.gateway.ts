@@ -29,9 +29,32 @@ type JoinPayload = {
 
 export async function configureCollaboration(io: Server) {
   if (env.REDIS_URL) {
-    const pubClient = new Redis(env.REDIS_URL);
+    const pubClient = new Redis(env.REDIS_URL, {
+      lazyConnect: true,
+      connectTimeout: 750,
+      maxRetriesPerRequest: 1
+    });
     const subClient = pubClient.duplicate();
-    io.adapter(createAdapter(pubClient, subClient));
+    const onRedisError = (error: Error) => {
+      console.warn(`Redis adapter unavailable: ${error.message}`);
+    };
+    pubClient.on("error", onRedisError);
+    subClient.on("error", onRedisError);
+
+    try {
+      await Promise.all([pubClient.connect(), subClient.connect()]);
+      await pubClient.ping();
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log("Socket.IO Redis adapter enabled");
+    } catch (error) {
+      console.warn(
+        `Socket.IO Redis adapter disabled; running with in-memory realtime only. ${
+          error instanceof Error ? error.message : "Redis connection failed"
+        }`
+      );
+      pubClient.disconnect();
+      subClient.disconnect();
+    }
   }
 
   io.use(async (socket: AuthedSocket, next) => {

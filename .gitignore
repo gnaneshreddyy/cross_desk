@@ -47,6 +47,7 @@ redis_data/
 .cache/
 tmp/
 temp/
+.run/
 
 # Package manager caches
 .npm/
